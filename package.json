@@ -25,7 +25,9 @@
 		"@phosphor-icons/react": "^2.1.10",
 		"agents": "^0.7.1",
 		"ai": "^6.0.105",
+		"dotenv": "^17.3.1",
 		"pdf-parse": "^2.4.5",
+		"pdf-parse-fork": "^1.2.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"streamdown": "^2.2.0",
@@ -44,6 +46,7 @@
 		"oxfmt": "^0.36.0",
 		"oxlint": "^1.51.0",
 		"tailwindcss": "^4.2.1",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",
 		"wrangler": "^4.69.0"
