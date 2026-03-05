@@ -19,10 +19,10 @@ interface Chunk {
 
 function cleanText(text: string): string {
   return text
-    .replace(/\n/g, " ") 
-    .replace(/\r/g, "") 
-    .replace(/\t/g, " ") 
-    .replace(/\s+/g, " ") 
+    .replace(/\n/g, " ")
+    .replace(/\r/g, "")
+    .replace(/\t/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -132,7 +132,7 @@ async function ingest() {
       const upsertData = (await upsertResponse.json()) as {
         result: { data: number[][] };
       };
-      console.log("Upsert response:", JSON.stringify(upsertData)); 
+      console.log("Upsert response:", JSON.stringify(upsertData));
       console.log(`   -> Lote ${Math.floor(i / 10) + 1} inserted\n`);
     }
   }
