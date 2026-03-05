@@ -1,14 +1,9 @@
 import { createWorkersAI } from "workers-ai-provider";
 import { routeAgentRequest } from "agents";
 import { AIChatAgent, type OnChatMessageOptions } from "@cloudflare/ai-chat";
-import {
-  streamText,
-  convertToModelMessages,
-  pruneMessages,
-} from "ai";
+import { streamText, convertToModelMessages, pruneMessages } from "ai";
 
 export class ChatAgent extends AIChatAgent<Env> {
-
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions) {
     const workersai = createWorkersAI({ binding: this.env.AI });
 
