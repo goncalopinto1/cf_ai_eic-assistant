@@ -19,10 +19,10 @@ interface Chunk {
 
 function cleanText(text: string): string {
   return text
-    .replace(/\n/g, " ") // newlines por espaços
-    .replace(/\r/g, "") // carriage returns
-    .replace(/\t/g, " ") // tabs por espaços
-    .replace(/\s+/g, " ") // múltiplos espaços por um só
+    .replace(/\n/g, " ") 
+    .replace(/\r/g, "") 
+    .replace(/\t/g, " ") 
+    .replace(/\s+/g, " ") 
     .trim();
 }
 
@@ -50,7 +50,6 @@ function chunkText(text: string, source: string): Chunk[] {
 }
 
 async function getEmbeddings(texts: string[]): Promise<number[][]> {
-  // call to workers ai claudeflare rest api
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/baai/bge-base-en-v1.5`,
     {
@@ -133,7 +132,7 @@ async function ingest() {
       const upsertData = (await upsertResponse.json()) as {
         result: { data: number[][] };
       };
-      console.log("Upsert response:", JSON.stringify(upsertData)); // ← log temporário
+      console.log("Upsert response:", JSON.stringify(upsertData)); 
       console.log(`   -> Lote ${Math.floor(i / 10) + 1} inserted\n`);
     }
   }
