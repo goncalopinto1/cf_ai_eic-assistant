@@ -30,26 +30,35 @@ export class ChatAgent extends AIChatAgent<Env> {
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions) {
     const workersai = createWorkersAI({ binding: this.env.AI });
 
-    const messages = await convertToModelMessages(this.messages);
-    const lastMessage = messages[messages.length - 1];
-    const query =
-      typeof lastMessage?.content === "string" ? lastMessage.content : "";
+    const lastMessage = this.messages[this.messages.length - 1];
+    const query = lastMessage.parts
+      .filter((part) => part.type === "text")
+      .map((part) => (part as { type: "text"; text: string }).text)
+      .join(" ") ?? "";
 
     const context = await searchVectorize(query, this.env);
+    console.log("Query:", query);
+    console.log("Context found:", context ? context.substring(0, 200) : "EMPTY");
 
     const result = streamText({
       model: workersai("@cf/meta/llama-3.3-70b-instruct-fp8-fast"),
       maxOutputTokens: 1024,
-      system: `You are an academic assistant for students of Computer Engineering and Computing at the University of Porto (FEUP).
-You help with questions about programming, algorithms, data structures, databases, operating systems, and other subjects in the degree.
-You always respond in English, in a clear and pedagogical way.
-You MUST refuse to answer any question that is not directly related to Computer Engineering topics such as programming, algorithms, data structures, databases, operating systems, computer networks, or software engineering. If asked about anything else (economics, history, sports, etc.), respond ONLY with: "I can only help with Computer Engineering and Computing topics. Please ask me something related to your degree."
-Use the following context of the slides of the classes to answer:
-<context>
-${context}
-</context>
+      system: `You are an academic assistant EXCLUSIVELY for students of Computer Engineering and Computing at the University of Porto (FEUP).
 
-If the context does not have relevant information, answer with your knowledge`,
+              STRICT RULES - NEVER BREAK THESE:
+              1. You ONLY answer questions directly about: programming languages (C, C++, Java, Python, Dart), algorithms, data structures, databases, SQL, operating systems, computer networks, software engineering, or computer architecture.
+              2. If the question is about ANY other topic - biology, economics, history, sports, medicine, psychology, or anything not in rule 1 - you MUST respond with ONLY: "I can only help with Computer Engineering and Computing topics. Please ask me something related to your degree at FEUP."
+              3. Do NOT try to connect unrelated topics to computer science. A question about the brain, muscles, or biology is NOT a computer science question.
+
+              CONTEXT FROM SLIDES:
+              <context>
+              ${context}
+              </context>
+
+              SOURCE RULES:
+              - If you used the context above to answer, end your response with "📄 Source: [value of the source field from context]"
+              - If the context was not relevant and you answered from general knowledge, end with "💡 Source: General knowledge"
+              - NEVER invent or fabricate source names`,
       messages: pruneMessages({
         messages: await convertToModelMessages(this.messages),
         toolCalls: "before-last-2-messages"
