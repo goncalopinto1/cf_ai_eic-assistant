@@ -31,14 +31,13 @@ export class ChatAgent extends AIChatAgent<Env> {
     const workersai = createWorkersAI({ binding: this.env.AI });
 
     const lastMessage = this.messages[this.messages.length - 1];
-    const query = lastMessage.parts
-      .filter((part) => part.type === "text")
-      .map((part) => (part as { type: "text"; text: string }).text)
-      .join(" ") ?? "";
+    const query =
+      lastMessage.parts
+        .filter((part) => part.type === "text")
+        .map((part) => (part as { type: "text"; text: string }).text)
+        .join(" ") ?? "";
 
     const context = await searchVectorize(query, this.env);
-    console.log("Query:", query);
-    console.log("Context found:", context ? context.substring(0, 200) : "EMPTY");
 
     const result = streamText({
       model: workersai("@cf/meta/llama-3.3-70b-instruct-fp8-fast"),

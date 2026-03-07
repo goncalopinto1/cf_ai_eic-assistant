@@ -1,39 +1,18 @@
 import { Suspense, useCallback, useState, useEffect, useRef } from "react";
 import { useAgent } from "agents/react";
 import { useAgentChat } from "@cloudflare/ai-chat/react";
-import { isToolUIPart, getToolName } from "ai";
 import type { UIMessage } from "ai";
-import type { MCPServersState } from "agents";
-import {
-  Button,
-  Badge,
-  InputArea,
-  Empty,
-  Surface,
-  Text
-} from "@cloudflare/kumo";
-import { Toasty, useKumoToastManager } from "@cloudflare/kumo/components/toast";
+import { Button, Badge, InputArea, Empty, Text } from "@cloudflare/kumo";
+import { Toasty } from "@cloudflare/kumo/components/toast";
 import { Streamdown } from "streamdown";
-import { Switch } from "@cloudflare/kumo";
 import {
   PaperPlaneRightIcon,
   StopIcon,
   TrashIcon,
-  GearIcon,
   ChatCircleDotsIcon,
   CircleIcon,
   MoonIcon,
   SunIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  BrainIcon,
-  CaretDownIcon,
-  BugIcon,
-  PlugsConnectedIcon,
-  PlusIcon,
-  SignInIcon,
-  XIcon,
-  WrenchIcon,
   StudentIcon
 } from "@phosphor-icons/react";
 
@@ -64,151 +43,13 @@ function ThemeToggle() {
   );
 }
 
-// ── Tool rendering ────────────────────────────────────────────────────
-
-function ToolPartView({
-  part,
-  addToolApprovalResponse
-}: {
-  part: UIMessage["parts"][number];
-  addToolApprovalResponse: (response: {
-    id: string;
-    approved: boolean;
-  }) => void;
-}) {
-  if (!isToolUIPart(part)) return null;
-  const toolName = getToolName(part);
-
-  // Completed
-  if (part.state === "output-available") {
-    return (
-      <div className="flex justify-start">
-        <Surface className="max-w-[85%] px-4 py-2.5 rounded-xl ring ring-kumo-line">
-          <div className="flex items-center gap-2 mb-1">
-            <GearIcon size={14} className="text-kumo-inactive" />
-            <Text size="xs" variant="secondary" bold>
-              {toolName}
-            </Text>
-            <Badge variant="secondary">Done</Badge>
-          </div>
-          <div className="font-mono">
-            <Text size="xs" variant="secondary">
-              {JSON.stringify(part.output, null, 2)}
-            </Text>
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
-  // Needs approval
-  if ("approval" in part && part.state === "approval-requested") {
-    const approvalId = (part.approval as { id?: string })?.id;
-    return (
-      <div className="flex justify-start">
-        <Surface className="max-w-[85%] px-4 py-3 rounded-xl ring-2 ring-kumo-warning">
-          <div className="flex items-center gap-2 mb-2">
-            <GearIcon size={14} className="text-kumo-warning" />
-            <Text size="sm" bold>
-              Approval needed: {toolName}
-            </Text>
-          </div>
-          <div className="font-mono mb-3">
-            <Text size="xs" variant="secondary">
-              {JSON.stringify(part.input, null, 2)}
-            </Text>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<CheckCircleIcon size={14} />}
-              onClick={() => {
-                if (approvalId) {
-                  addToolApprovalResponse({ id: approvalId, approved: true });
-                }
-              }}
-            >
-              Approve
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<XCircleIcon size={14} />}
-              onClick={() => {
-                if (approvalId) {
-                  addToolApprovalResponse({ id: approvalId, approved: false });
-                }
-              }}
-            >
-              Reject
-            </Button>
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
-  // Rejected / denied
-  if (
-    part.state === "output-denied" ||
-    ("approval" in part &&
-      (part.approval as { approved?: boolean })?.approved === false)
-  ) {
-    return (
-      <div className="flex justify-start">
-        <Surface className="max-w-[85%] px-4 py-2.5 rounded-xl ring ring-kumo-line">
-          <div className="flex items-center gap-2">
-            <XCircleIcon size={14} className="text-kumo-danger" />
-            <Text size="xs" variant="secondary" bold>
-              {toolName}
-            </Text>
-            <Badge variant="secondary">Rejected</Badge>
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
-  // Executing
-  if (part.state === "input-available" || part.state === "input-streaming") {
-    return (
-      <div className="flex justify-start">
-        <Surface className="max-w-[85%] px-4 py-2.5 rounded-xl ring ring-kumo-line">
-          <div className="flex items-center gap-2">
-            <GearIcon size={14} className="text-kumo-inactive animate-spin" />
-            <Text size="xs" variant="secondary">
-              Running {toolName}...
-            </Text>
-          </div>
-        </Surface>
-      </div>
-    );
-  }
-
-  return null;
-}
-
 // ── Main chat ─────────────────────────────────────────────────────────
 
 function Chat() {
   const [connected, setConnected] = useState(false);
   const [input, setInput] = useState("");
-  const [showDebug, setShowDebug] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const toasts = useKumoToastManager();
-  const [mcpState, setMcpState] = useState<MCPServersState>({
-    prompts: [],
-    resources: [],
-    servers: {},
-    tools: []
-  });
-  const [showMcpPanel, setShowMcpPanel] = useState(false);
-  const [mcpName, setMcpName] = useState("");
-  const [mcpUrl, setMcpUrl] = useState("");
-  const [isAddingServer, setIsAddingServer] = useState(false);
-  const mcpPanelRef = useRef<HTMLDivElement>(null);
 
   const agent = useAgent({
     agent: "ChatAgent",
@@ -217,96 +58,11 @@ function Chat() {
     onError: useCallback(
       (error: Event) => console.error("WebSocket error:", error),
       []
-    ),
-    onMcpUpdate: useCallback((state: MCPServersState) => {
-      setMcpState(state);
-    }, []),
-    onMessage: useCallback(
-      (message: MessageEvent) => {
-        try {
-          const data = JSON.parse(String(message.data));
-          if (data.type === "scheduled-task") {
-            toasts.add({
-              title: "Scheduled task completed",
-              description: data.description,
-              timeout: 0
-            });
-          }
-        } catch {
-          // Not JSON or not our event
-        }
-      },
-      [toasts]
     )
   });
 
-  // Close MCP panel when clicking outside
-  useEffect(() => {
-    if (!showMcpPanel) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        mcpPanelRef.current &&
-        !mcpPanelRef.current.contains(e.target as Node)
-      ) {
-        setShowMcpPanel(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showMcpPanel]);
-
-  const handleAddServer = async () => {
-    if (!mcpName.trim() || !mcpUrl.trim()) return;
-    setIsAddingServer(true);
-    try {
-      await agent.call("addServer", [
-        mcpName.trim(),
-        mcpUrl.trim(),
-        window.location.origin
-      ]);
-      setMcpName("");
-      setMcpUrl("");
-    } catch (e) {
-      console.error("Failed to add MCP server:", e);
-    } finally {
-      setIsAddingServer(false);
-    }
-  };
-
-  const handleRemoveServer = async (serverId: string) => {
-    try {
-      await agent.call("removeServer", [serverId]);
-    } catch (e) {
-      console.error("Failed to remove MCP server:", e);
-    }
-  };
-
-  const serverEntries = Object.entries(mcpState.servers);
-  const mcpToolCount = mcpState.tools.length;
-
-  const {
-    messages,
-    sendMessage,
-    clearHistory,
-    addToolApprovalResponse,
-    stop,
-    status
-  } = useAgentChat({
-    agent,
-    onToolCall: async (event) => {
-      if (
-        "addToolOutput" in event &&
-        event.toolCall.toolName === "getUserTimezone"
-      ) {
-        event.addToolOutput({
-          toolCallId: event.toolCall.toolCallId,
-          output: {
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            localTime: new Date().toLocaleTimeString()
-          }
-        });
-      }
-    }
+  const { messages, sendMessage, clearHistory, stop, status } = useAgentChat({
+    agent
   });
 
   const isStreaming = status === "streaming" || status === "submitted";
@@ -418,65 +174,6 @@ function Chat() {
 
             return (
               <div key={message.id} className="space-y-2">
-                {showDebug && (
-                  <pre className="text-[11px] text-kumo-subtle bg-kumo-control rounded-lg p-3 overflow-auto max-h-64">
-                    {JSON.stringify(message, null, 2)}
-                  </pre>
-                )}
-
-                {/* Tool parts */}
-                {message.parts.filter(isToolUIPart).map((part) => (
-                  <ToolPartView
-                    key={part.toolCallId}
-                    part={part}
-                    addToolApprovalResponse={addToolApprovalResponse}
-                  />
-                ))}
-
-                {/* Reasoning parts */}
-                {message.parts
-                  .filter(
-                    (part) =>
-                      part.type === "reasoning" &&
-                      (part as { text?: string }).text?.trim()
-                  )
-                  .map((part, i) => {
-                    const reasoning = part as {
-                      type: "reasoning";
-                      text: string;
-                      state?: "streaming" | "done";
-                    };
-                    const isDone = reasoning.state === "done" || !isStreaming;
-                    return (
-                      <div key={i} className="flex justify-start">
-                        <details className="max-w-[85%] w-full" open={!isDone}>
-                          <summary className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm select-none">
-                            <BrainIcon size={14} className="text-purple-400" />
-                            <span className="font-medium text-kumo-default">
-                              Reasoning
-                            </span>
-                            {isDone ? (
-                              <span className="text-xs text-kumo-success">
-                                Complete
-                              </span>
-                            ) : (
-                              <span className="text-xs text-kumo-brand">
-                                Thinking...
-                              </span>
-                            )}
-                            <CaretDownIcon
-                              size={14}
-                              className="ml-auto text-kumo-inactive"
-                            />
-                          </summary>
-                          <pre className="mt-2 px-3 py-2 rounded-lg bg-kumo-control text-xs text-kumo-default whitespace-pre-wrap overflow-auto max-h-64">
-                            {reasoning.text}
-                          </pre>
-                        </details>
-                      </div>
-                    );
-                  })}
-
                 {/* Text parts */}
                 {message.parts
                   .filter((part) => part.type === "text")
@@ -496,7 +193,10 @@ function Chat() {
 
                     return (
                       <div key={i} className="flex justify-start">
-                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed">
+                        <div className="w-8 h-8 rounded-full bg-kumo-accent flex items-center justify-center text-xs font-bold text-kumo-default shrink-0">
+                          EIC
+                        </div>
+                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-control text-kumo-default leading-relaxed">
                           <Streamdown
                             className="sd-theme rounded-2xl rounded-bl-md p-3"
                             controls={false}
@@ -541,7 +241,7 @@ function Chat() {
                 el.style.height = "auto";
                 el.style.height = `${el.scrollHeight}px`;
               }}
-              placeholder="Send a message..."
+              placeholder="What can I help you with?"
               disabled={!connected || isStreaming}
               rows={1}
               className="flex-1 ring-0! focus:ring-0! shadow-none! bg-transparent! outline-none! resize-none max-h-40"
