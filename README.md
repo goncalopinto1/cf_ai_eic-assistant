@@ -1,6 +1,6 @@
 # EIC Assistant 🎓
 
-An AI-powered academic assistant for Computer Engineering and Computing (EIC) 
+An AI-powered academic assistant for Computer Engineering and Computing (EIC)
 students at the University of Porto (FEUP), built on Cloudflare's edge infrastructure.
 
 > **Live Demo:** https://eic-assistant.goncalo-luis-pinto.workers.dev
@@ -16,14 +16,15 @@ students at the University of Porto (FEUP), built on Cloudflare's edge infrastru
 
 ## Overview
 
-EIC Assistant uses Retrieval-Augmented Generation (RAG) to answer questions 
+EIC Assistant uses Retrieval-Augmented Generation (RAG) to answer questions
 based on real FEUP course slides, rather than relying solely on general AI knowledge.
-It covers topics such as Algorithms and Data Structures, Databases, SQL, 
+It covers topics such as Algorithms and Data Structures, Databases, SQL,
 Operating Systems, Computer architecture and Programming.
 
 ---
 
 ## Architecture
+
 ```
 User (Browser)
     ↓ WebSocket
@@ -40,35 +41,37 @@ User (Browser)
 
 ### Components
 
-| Component | Technology | Purpose |
-|---|---|---|
-| Chat UI | React + Cloudflare Kumo | Frontend interface |
-| Agent | AIChatAgent + Durable Objects | Chat logic + message persistence |
-| LLM | Llama 3.3 70B (Workers AI) | Response generation |
-| Embeddings | bge-base-en-v1.5 (Workers AI) | Semantic vector generation |
-| Vector DB | Cloudflare Vectorize | Semantic search over course slides |
+| Component  | Technology                    | Purpose                            |
+| ---------- | ----------------------------- | ---------------------------------- |
+| Chat UI    | React + Cloudflare Kumo       | Frontend interface                 |
+| Agent      | AIChatAgent + Durable Objects | Chat logic + message persistence   |
+| LLM        | Llama 3.3 70B (Workers AI)    | Response generation                |
+| Embeddings | bge-base-en-v1.5 (Workers AI) | Semantic vector generation         |
+| Vector DB  | Cloudflare Vectorize          | Semantic search over course slides |
 
 ---
 
 ## Requirements Coverage
 
-| Requirement | Implementation |
-|---|---|
-| LLM | Llama 3.3 70B via Workers AI |
-| Workflow / coordination | AIChatAgent + Durable Objects |
-| User input via chat | WebSocket chat interface |
-| Memory or state | Durable Objects (chat history) + Vectorize (RAG) |
+| Requirement             | Implementation                                   |
+| ----------------------- | ------------------------------------------------ |
+| LLM                     | Llama 3.3 70B via Workers AI                     |
+| Workflow / coordination | AIChatAgent + Durable Objects                    |
+| User input via chat     | WebSocket chat interface                         |
+| Memory or state         | Durable Objects (chat history) + Vectorize (RAG) |
 
 ---
 
 ## Running Locally
 
 ### Prerequisites
+
 - Node.js 18+
 - Cloudflare account
 - Wrangler CLI
 
 ### Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/goncalopinto1/cf_ai_eic-assistant
@@ -83,6 +86,7 @@ cp .env.example .env
 ```
 
 ### Index your course slides
+
 ```bash
 # Add your PDF files to the pdfs/ folder
 # Then run the ingestion script
@@ -90,6 +94,7 @@ npx tsx src/ingest.ts
 ```
 
 ### Run locally
+
 ```bash
 npm run dev
 ```
@@ -99,6 +104,7 @@ Open http://localhost:5173 in your browser.
 ---
 
 ## Deployment
+
 ```bash
 npm run deploy
 ```
@@ -106,6 +112,7 @@ npm run deploy
 ---
 
 ## Project Structure
+
 ```
 eic-assistant/
 ├── src/
@@ -115,9 +122,9 @@ eic-assistant/
 │   └── client.tsx       # React entry point
 ├── pdfs/                # Course slides (not committed)
 │   ├── ac/
-│   └── aed/   
-│   └── bd/   
-│   └── so/   
+│   └── aed/
+│   └── bd/
+│   └── so/
 ├── public/              # Static assets
 ├── PROMPTS.md           # Prompt engineering documentation
 └── wrangler.jsonc       # Cloudflare configuration
@@ -138,5 +145,5 @@ eic-assistant/
 
 ## AI Assistance
 
-This project was built with assistance from Claude (Anthropic) as a development 
+This project was built with assistance from Claude (Anthropic) as a development
 partner. All AI prompts used during development are documented in [PROMPTS.md](PROMPTS.md).
