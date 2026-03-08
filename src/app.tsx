@@ -51,8 +51,17 @@ function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const sessionId = (() => {
+    const existing = localStorage.getItem("sessionId");
+    if (existing) return existing;
+    const id = Math.random().toString(36).slice(2);
+    localStorage.setItem("sessionId", id);
+    return id;
+  })();
+
   const agent = useAgent({
     agent: "ChatAgent",
+    name: sessionId,
     onOpen: useCallback(() => setConnected(true), []),
     onClose: useCallback(() => setConnected(false), []),
     onError: useCallback(
